@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Combat Tiers</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Orbitron:wght@600&display=swap" rel="stylesheet">
+
+<style>
+body {
+    margin:0;
+    background:#0B0F14;
+    color:#fff;
+    font-family:Inter, sans-serif;
+}
+
+header {
+    padding:24px;
+    font-family:Orbitron;
+    font-size:26px;
+}
+
+.modes {
+    display:flex;
+    gap:10px;
+    padding:0 24px 20px;
+}
+
+button {
+    background:#11161D;
+    border:1px solid #1B2430;
+    color:#9AA4AF;
+    padding:10px 18px;
+    cursor:pointer;
+}
+
+button.active {
+    color:#fff;
+    border-color:#6BE675;
+}
+
+.player {
+    display:flex;
+    align-items:center;
+    padding:14px 20px;
+    border-bottom:1px solid #1B2430;
+    background:#11161D;
+}
+
+.place {
+    width:60px;
+    font-family:Orbitron;
+    color:#6BE675;
+}
+
+.skin {
+    width:36px;
+    height:36px;
+    margin-right:12px;
+}
+
+.name { flex:1; }
+
+.name a {
+    color:#fff;
+    text-decoration:none;
+    font-weight:600;
+}
+
+.points {
+    font-size:12px;
+    color:#9AA4AF;
+}
+
+.modes-breakdown {
+    display:flex;
+    gap:18px;
+}
+
+.mode-box {
+    background:#0B0F14;
+    border:1px solid #1B2430;
+    padding:6px 10px;
+    text-align:center;
+}
+
+.hidden { display:none; }
+
+.pagination {
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    padding:20px;
+}
+
+.search-result {
+    margin:20px;
+    padding:20px;
+    background:#11161D;
+    border:1px solid #1B2430;
+    text-align:center;
+}
+
+.search-result img {
+    width:64px;
+    margin-bottom:10px;
+}
+
+.search-tier {
+    font-size:18px;
+    font-weight:600;
+}
+
+.search-mode {
+    font-size:12px;
+    text-decoration:underline;
+    font-weight:bold;
+    display:block;
+    margin-bottom:12px;
+}
+
+.mode-tier {
+    padding:4px 8px;
+    border-radius:6px;
+    font-size:12px;
+    font-weight:600;
+    display:inline-block;
+    color:#fff;
+}
+
+.mode-tier.HT1 { background:#e6ab0b; }
+.mode-tier.LT1 { background:#d1a428; }
+.mode-tier.HT2 { background:#919090; }
+.mode-tier.LT2 { background:#696868; }
+.mode-tier.HT3 { background:#9c6017; }
+.mode-tier.LT3 { background:#5e3a0e; }
+.mode-tier.HT4, .mode-tier.HT5 { background:#514b5c; }
+.mode-tier.LT4, .mode-tier.LT5 { background:#3a3740; }
+
+.tier-box {
+    margin:20px;
+    border:1px solid #1B2430;
+}
+
+.tier-title {
+    padding:12px;
+    font-family:Orbitron;
+    font-size:18px;
+}
+
+.tier-player {
+    display:flex;
+    align-items:center;
+    padding:10px 14px;
+    border-top:1px solid rgba(255,255,255,0.05);
+}
+
+.tier-player img {
+    width:32px;
+    height:32px;
+    margin-right:10px;
+}
+
+.tier-HT1 { background:#e6ab0b; }
+.tier-LT1 { background:#d1a428; }
+.tier-HT2 { background:#919090; }
+.tier-LT2 { background:#696868; }
+.tier-HT3 { background:#9c6017; }
+.tier-LT3 { background:#5e3a0e; }
+.tier-HT4, .tier-HT5 { background:#514b5c; }
+.tier-LT4, .tier-LT5 { background:#3a3740; }
+
+</style>
+</head>
+
+<body>
+
+<header>Combat Tiers</header>
+
+<!-- 👇 PLAYER COUNT DISPLAY -->
+<div id="playerCount" style="padding:0 24px 10px;color:#9AA4AF;"></div>
+
+<div class="modes">
+    <button onclick="showMode('overall')" class="active">Overall</button>
+    <button onclick="showMode('iron')">Iron Vanilla</button>
+    <button onclick="showMode('lifesteal')">Lifesteal</button>
+    <button onclick="showMode('ogdsmp')">OG Dsmp</button>
+    <button onclick="showMode('ironaxe')">Iron Axe</button>
+    <button onclick="showMode('shieldless')">Shieldless UHC</button>
+    <button onclick="showMode('diamondmace')">Diamond Mace</button>
+</div>
+
+<div style="padding:0 24px 10px;">
+    <input id="searchInput" placeholder="Search IGN..."
+    oninput="handleSearch()"
+    style="width:100%;padding:12px;background:#11161D;border:1px solid #1B2430;color:white;">
+</div>
+
+<div id="overall"></div>
+
+<div class="pagination">
+    <button onclick="prevPage()">Previous</button>
+    <button onclick="nextPage()">Next</button>
+</div>
+
+<div id="iron" class="hidden"></div>
+<div id="lifesteal" class="hidden"></div>
+<div id="ogdsmp" class="hidden"></div>
+<div id="ironaxe" class="hidden"></div>
+<div id="shieldless" class="hidden"></div>
+<div id="diamondmace" class="hidden"></div>
+
+<script>
+
+/* ===============================
+   🔧 EDIT PLAYERS HERE
+   - Add/remove players
+   - Edit tiers freely
+   - Format: { name:"IGN", iron:"HT#", lifesteal:"LT#" }
+================================ */
+let players = [
+    { name:"kv3s", iron:"HT3", lifesteal:"LT3", ogdsmp:"LT3", ironaxe:"LT3", shieldless:"LT3", diamondmace:"LT3" },
+    { name:"Snip3rzs", iron:"LT3", lifesteal:"LT3", ogdsmp:"LT3", ironaxe:"LT3", shieldless:"LT3", diamondmace:"LT3" },
+    { name:"Boxedbyisaac", iron:"LT4", lifesteal:"LT4", ogdsmp:"LT4", ironaxe:"LT5", shieldless:"HT4", diamondmace:"HT5" },
+{ name:"Etherzs", iron:"LT3", lifesteal:"LT3", ogdsmp:"LT3", ironaxe:"LT3", shieldless:"LT3", diamondmace:"LT3" },
+	
+    // ➕ ADD MORE PLAYERS BELOW
+    // { name:"Example", iron:"HT2", lifesteal:"LT1" }
+];
+
+/* 👥 PLAYER COUNT */
+function updatePlayerCount(){
+    document.getElementById("playerCount").innerText =
+        `Players: ${players.length}`;
+}
+
+const points = {
+    "HT1":60,"LT1":45,
+    "HT2":30,"LT2":20,
+    "HT3":10,"LT3":6,
+    "HT4":4,"LT4":3,
+    "HT5":2,"LT5":1
+};
+
+/* ✅ SAFE TOTAL CALCULATION */
+function calculateTotals(){
+    players.forEach(p=>{
+        p.total=(points[p.iron]||0)+(points[p.lifesteal]||0)+(points[p.ogdsmp]||0)+(points[p.ironaxe]||0)+(points[p.shieldless]||0)+(points[p.diamondmace]||0);
+    });
+}
+
+function getSkin(name){ return `https://minotar.net/avatar/${name}`; }
+function getProfile(name){ return `https://namemc.com/profile/${name}`; }
+
+function ordinal(n){
+    let s=["th","st","nd","rd"], v=n%100;
+    return n+(s[(v-20)%10]||s[v]||s[0]);
+}
+
+let currentPage = 1;
+const perPage = 20;
+
+function nextPage(){
+    if(currentPage < Math.ceil(players.length / perPage)){
+        currentPage++;
+        buildOverall();
+    }
+}
+
+function prevPage(){
+    if(currentPage > 1){
+        currentPage--;
+        buildOverall();
+    }
+}
+
+function showMode(mode){
+    document.querySelectorAll("button").forEach(b=>b.classList.remove("active"));
+    event.target.classList.add("active");
+
+    ["overall","iron","lifesteal","ogdsmp","ironaxe","shieldless","diamondmace"].forEach(id=>{
+        document.getElementById(id).classList.add("hidden");
+    });
+
+    document.getElementById(mode).classList.remove("hidden");
+}
+
+function handleSearch(){
+    let q = document.getElementById("searchInput").value.toLowerCase();
+    let container = document.getElementById("overall");
+
+    if(q === ""){
+        document.querySelector(".pagination").style.display="flex";
+        buildOverall();
+        return;
+    }
+
+    document.querySelector(".pagination").style.display="none";
+
+    let player = players.find(p => p.name.toLowerCase() === q);
+
+    container.innerHTML = "";
+
+    if(!player){
+        container.innerHTML = `<div class="search-result">Player not found</div>`;
+        return;
+    }
+
+    let ironTier = player.iron || "Unranked";
+    let lifeTier = player.lifesteal || "Unranked";
+
+    let div = document.createElement("div");
+    div.className = "search-result";
+
+    div.innerHTML = `
+        <img src="${getSkin(player.name)}">
+        <div style="font-size:20px;margin-bottom:10px;">
+            <a href="${getProfile(player.name)}" target="_blank">${player.name}</a>
+        </div>
+
+        <div class="search-tier">${ironTier}</div>
+        <span class="search-mode">Iron Vanilla</span>
+
+        <div class="search-tier">${lifeTier}</div>
+        <span class="search-mode">Lifesteal</span>
+
+        <div class="search-tier">${player.ogdsmp || "Unranked"}</div>
+        <span class="search-mode">OG Dsmp</span>
+    `;
+
+    container.appendChild(div);
+}
+
+function buildOverall(){
+    calculateTotals();
+    updatePlayerCount();
+
+    let sorted = [...players].sort((a,b)=>b.total-a.total);
+    let container = document.getElementById("overall");
+    container.innerHTML="";
+
+    let start = (currentPage - 1) * perPage;
+    let pagePlayers = sorted.slice(start, start + perPage);
+
+    pagePlayers.forEach((p,i)=>{
+        let div = document.createElement("div");
+        div.className="player";
+
+        div.innerHTML = `
+        <div class="place">${ordinal(start + i + 1)}</div>
+        <img class="skin" src="${getSkin(p.name)}">
+        <div class="name">
+            <a href="${getProfile(p.name)}" target="_blank">${p.name}</a>
+            <div class="points">${p.total} pts</div>
+        </div>
+        <div class="modes-breakdown">
+            <div class="mode-box">
+                <div class="mode-tier ${p.iron}">${p.iron || "Unranked"}</div>
+                <div>Iron Vanilla</div>
+            </div>
+            <div class="mode-box">
+                <div class="mode-tier ${p.lifesteal}">${p.lifesteal || "Unranked"}</div>
+                <div>Lifesteal</div>
+            </div>
+            <div class="mode-box">
+                <div class="mode-tier ${p.ogdsmp}">${p.ogdsmp || "Unranked"}</div>
+                <div>OG Dsmp</div>
+            </div>
+            <div class="mode-box">
+                <div class="mode-tier ${p.ironaxe}">${p.ironaxe || "Unranked"}</div>
+                <div>Iron Axe</div>
+            </div>
+            <div class="mode-box">
+                <div class="mode-tier ${p.shieldless}">${p.shieldless || "Unranked"}</div>
+                <div>Shieldless UHC</div>
+            </div>
+            <div class="mode-box">
+                <div class="mode-tier ${p.diamondmace}">${p.diamondmace || "Unranked"}</div>
+                <div>Diamond Mace</div>
+            </div>
+        </div>
+        `;
+
+        container.appendChild(div);
+    });
+}
+
+function buildTiers(mode, id){
+
+    let order = ["HT1","LT1","HT2","LT2","HT3","LT3","HT4","LT4","HT5","LT5"];
+
+    let container = document.getElementById(id);
+    container.innerHTML = "";
+
+    order.forEach(tier => {
+
+        let filtered = players.filter(p => p[mode] === tier);
+        if(filtered.length === 0) return;
+
+        let box = document.createElement("div");
+        box.className = `tier-box tier-${tier}`;
+
+        let content = filtered.map(p => `
+            <div class="tier-player">
+                <img src="${getSkin(p.name)}">
+                <div class="name">${p.name}</div>
+            </div>
+        `).join("");
+
+        box.innerHTML = `
+            <div class="tier-title">${tier}</div>
+            ${content}
+        `;
+
+        container.appendChild(box);
+    });
+}
+
+buildOverall();
+buildTiers("iron","iron");
+buildTiers("lifesteal","lifesteal");
+buildTiers("ogdsmp","ogdsmp");
+buildTiers("ironaxe","ironaxe");
+buildTiers("shieldless","shieldless");
+buildTiers("diamondmace","diamondmace");
+
+</script>
+</body>
+</html>
